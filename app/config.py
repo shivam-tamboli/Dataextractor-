@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     # OCR
     tesseract_cmd: str = "/usr/bin/tesseract"
 
+    # Grok (xAI) LLM
+    xai_api_key: str = ""
+    xai_model: str = "grok-3-latest"
+
     class Config:
         env_file = ".env"
 

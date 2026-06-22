@@ -21,3 +21,6 @@ pytesseract==0.3.13
 python-multipart==0.0.12
 aiofiles==24.1.0
 greenlet==3.1.1
+
+# LLM (Grok via OpenAI-compatible API)
+openai>=1.40.0
