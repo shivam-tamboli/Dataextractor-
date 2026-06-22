@@ -30,7 +30,7 @@ class Document(Base):
     file_name = Column(String(255), nullable=False)
     file_size = Column(Integer, nullable=True)
     status = Column(
-        Enum(DocumentStatus),
+        Enum(DocumentStatus, values_callable=lambda x: [e.value for e in x]),
         default=DocumentStatus.PENDING,
         nullable=False,
         index=True,
