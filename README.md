@@ -1,6 +1,6 @@
 # PDF Document Data Extractor
 
-A production-ready API that accepts **any PDF document** — invoices, tax forms, receipts, contracts — and returns all data as structured key-value pairs, stored in PostgreSQL. No external LLM API is used.
+A production-ready API that accepts **any PDF document** — invoices, tax forms, receipts, contracts — and returns all data as structured key-value pairs, stored in MySQL. No external LLM API is used.
 
 ---
 
@@ -27,7 +27,7 @@ A production-ready API that accepts **any PDF document** — invoices, tax forms
                                  └─────────┼────────┘
                                            ▼
                                   ┌─────────────────┐
-                                  │   PostgreSQL     │
+                                  │     MySQL        │
                                   │  documents       │
                                   │  document_fields │
                                   └─────────────────┘
@@ -45,30 +45,32 @@ A production-ready API that accepts **any PDF document** — invoices, tax forms
 
 ---
 
-## Database Schema
+## Database Schema (MySQL)
 
 ### `documents`
 | Column | Type | Description |
 |---|---|---|
-| id | integer PK | Auto-increment |
-| file_name | varchar | Original filename |
-| file_size | integer | Bytes |
-| status | enum | `pending` → `processing` → `done` / `failed` |
-| page_count | integer | Total pages |
-| is_scanned | integer | 1 if OCR was needed |
-| error_message | text | Set on failure |
-| created_at | timestamp | Upload time |
+| id | INT AUTO_INCREMENT PK | Auto-increment |
+| file_name | VARCHAR(255) | Original filename |
+| file_size | INT | Bytes |
+| status | ENUM | `pending` → `processing` → `done` / `failed` |
+| page_count | INT | Total pages |
+| is_scanned | INT | 1 if OCR was needed |
+| error_message | TEXT | Set on failure |
+| created_at | DATETIME | Upload time |
 
 ### `document_fields`
 | Column | Type | Description |
 |---|---|---|
-| id | integer PK | Auto-increment |
-| document_id | integer FK | References documents.id |
-| field_key | varchar | Extracted label |
-| field_value | text | Extracted value |
-| confidence | float | 0–1 confidence score |
-| extraction_method | varchar | `colon` / `multiline` / `table` / `regex` |
-| page_number | integer | Source page |
+| id | INT AUTO_INCREMENT PK | Auto-increment |
+| document_id | INT FK | References documents.id |
+| field_key | VARCHAR(500) | Extracted label |
+| field_value | TEXT | Extracted value |
+| confidence | FLOAT | 0–1 confidence score |
+| extraction_method | VARCHAR(50) | `colon` / `multiline` / `table` / `regex` |
+| page_number | INT | Source page |
+
+Both tables use **InnoDB** engine with **utf8mb4** charset.
 
 ---
 
@@ -149,7 +151,7 @@ Health check — returns `{"status": "ok"}`.
 git clone <repo-url>
 cd Dataextracor
 
-# 2. Start everything
+# 2. Start everything (MySQL + API)
 docker compose up --build
 
 # 3. Upload a PDF
@@ -171,38 +173,43 @@ open http://localhost:8000/docs
 ### Prerequisites
 
 - Python 3.11+
-- PostgreSQL 14+
+- MySQL 8.0+
 - Tesseract OCR
 
 ```bash
 # macOS
-brew install tesseract postgresql@16
+brew install mysql tesseract
 
 # Ubuntu / Debian
-sudo apt install tesseract-ocr libpq-dev
+sudo apt install mysql-server tesseract-ocr
 ```
 
 ### Setup
 
 ```bash
-# 1. Create virtualenv
+# 1. Start MySQL service
+brew services start mysql          # macOS
+# sudo systemctl start mysql       # Linux
+
+# 2. Create database
+mysql -uroot -p -e "CREATE DATABASE dataextractor CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+
+# 3. Create virtualenv
 python -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 
-# 2. Install dependencies
+# 4. Install dependencies
 pip install -r requirements.txt
 
-# 3. Configure environment
+# 5. Configure environment
 cp .env.example .env
-# Edit .env — set DATABASE_URL and TESSERACT_CMD
+# Edit .env — set DATABASE_URL with your MySQL credentials:
+# DATABASE_URL=mysql+aiomysql://root:<your_password>@localhost:3306/dataextractor
 
-# 4. Create database
-createdb dataextractor
-
-# 5. Run migrations
+# 6. Run migrations
 alembic upgrade head
 
-# 6. Start API
+# 7. Start API
 uvicorn app.main:app --reload
 ```
 
@@ -221,7 +228,7 @@ Dataextracor/
 │   ├── api/
 │   │   └── documents.py   # Route handlers
 │   ├── db/
-│   │   └── session.py     # Async engine, session factory, init_db
+│   │   └── session.py     # Async MySQL engine, session factory, init_db
 │   ├── models/
 │   │   └── database.py    # SQLAlchemy ORM models
 │   └── services/
@@ -241,7 +248,7 @@ Dataextracor/
 
 | Variable | Default | Description |
 |---|---|---|
-| `DATABASE_URL` | `postgresql+asyncpg://postgres:postgres@localhost:5432/dataextractor` | PostgreSQL connection |
+| `DATABASE_URL` | `mysql+aiomysql://root:@localhost:3306/dataextractor` | MySQL connection string |
 | `UPLOAD_DIR` | `/tmp/pdf_uploads` | Temp directory for uploaded files |
 | `MAX_FILE_SIZE_MB` | `50` | Upload size limit |
 | `TESSERACT_CMD` | `/usr/bin/tesseract` | Path to Tesseract binary |
