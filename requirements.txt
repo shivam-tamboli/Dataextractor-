@@ -1,0 +1,22 @@
+# Web framework
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+
+# Database
+sqlalchemy==2.0.36
+asyncpg==0.30.0
+alembic==1.14.0
+
+# Settings
+pydantic-settings==2.6.1
+
+# PDF parsing
+pdfplumber==0.11.4
+Pillow==11.0.0
+
+# OCR
+pytesseract==0.3.13
+
+# Utilities
+python-multipart==0.0.12
+aiofiles==24.1.0
