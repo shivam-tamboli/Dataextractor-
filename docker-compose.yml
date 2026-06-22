@@ -2,18 +2,17 @@ version: "3.9"
 
 services:
   db:
-    image: postgres:16-alpine
+    image: mysql:8.4
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: dataextractor
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: dataextractor
     ports:
-      - "5432:5432"
+      - "3306:3306"
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -24,7 +23,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/dataextractor
+      DATABASE_URL: mysql+aiomysql://root:root@db:3306/dataextractor
       UPLOAD_DIR: /tmp/pdf_uploads
       DEBUG: "false"
       TESSERACT_CMD: /usr/bin/tesseract
@@ -35,4 +34,4 @@ services:
       - /tmp/pdf_uploads:/tmp/pdf_uploads
 
 volumes:
-  pg_data:
+  mysql_data:

@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     debug: bool = False
 
     # Database
-    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/dataextractor"
+    database_url: str = "mysql+aiomysql://root:1234@localhost:3306/dataextractor"
 
     # Upload
     upload_dir: str = "/tmp/pdf_uploads"

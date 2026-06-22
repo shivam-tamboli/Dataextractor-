@@ -16,7 +16,7 @@ depends_on = None
 def upgrade() -> None:
     op.create_table(
         "documents",
-        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("id", sa.Integer(), nullable=False, autoincrement=True),
         sa.Column("file_name", sa.String(length=255), nullable=False),
         sa.Column("file_size", sa.Integer(), nullable=True),
         sa.Column(
@@ -31,13 +31,15 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.text("now()")),
         sa.Column("updated_at", sa.DateTime(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
+        mysql_engine="InnoDB",
+        mysql_charset="utf8mb4",
     )
     op.create_index("ix_documents_id", "documents", ["id"])
     op.create_index("ix_documents_status", "documents", ["status"])
 
     op.create_table(
         "document_fields",
-        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("id", sa.Integer(), nullable=False, autoincrement=True),
         sa.Column("document_id", sa.Integer(), nullable=False),
         sa.Column("field_key", sa.String(length=500), nullable=False),
         sa.Column("field_value", sa.Text(), nullable=False),
@@ -46,6 +48,8 @@ def upgrade() -> None:
         sa.Column("page_number", sa.Integer(), nullable=True),
         sa.ForeignKeyConstraint(["document_id"], ["documents.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
+        mysql_engine="InnoDB",
+        mysql_charset="utf8mb4",
     )
     op.create_index("ix_document_fields_id", "document_fields", ["id"])
     op.create_index("ix_document_fields_document_id", "document_fields", ["document_id"])
@@ -58,4 +62,3 @@ def downgrade() -> None:
     op.drop_index("ix_documents_status", table_name="documents")
     op.drop_index("ix_documents_id", table_name="documents")
     op.drop_table("documents")
-    op.execute("DROP TYPE IF EXISTS documentstatus")
